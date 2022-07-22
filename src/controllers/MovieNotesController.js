@@ -1,11 +1,11 @@
-const knex = require("../database/knex");
+const knex = require('../database/knex');
 
 class MovieNotesController {
-  async create(request,response) {
+  async create(request, response) {
     const { title, description, rating, tags } = request.body;
     const { user_id } = request.params;
 
-    const movie_notes_id = await knex("movie_notes").insert({
+    const note_id = await knex("movie_notes").insert({
       title,
       description,
       rating,
@@ -14,16 +14,17 @@ class MovieNotesController {
 
     const tagsInsert = tags.map(name => {
       return {
-        movie_notes_id,
-        user_id,
-        name
+        note_id,
+        name,
+        user_id
       }
     });
 
     await knex("movie_tags").insert(tagsInsert);
 
-    return response.status(201).json();
+    response.json();
   }
 }
+
 
 module.exports = MovieNotesController;
