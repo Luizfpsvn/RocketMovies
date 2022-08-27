@@ -1,4 +1,4 @@
-const { hash, compare } = require("bcryptjs")
+const { hash, compare } = require("bcryptjs");
 
 const AppError = require("../utils/AppError");
 const sqliteConnection = require("../database/sqlite");
@@ -8,15 +8,21 @@ class UsersController {
     const { name, email, password } = request.body;
 
     const database = await sqliteConnection();
-    const checkUserExists = await database.get("SELECT * FROM users WHERE email = (?)", [email]);
+    const checkUserExists = await database.get(
+      "SELECT * FROM users WHERE email = (?)",
+      [email]
+    );
 
-    if(checkUserExists) {
+    if (checkUserExists) {
       throw new AppError("This email is already registered");
     }
 
     const hashedPassword = await hash(password, 8);
 
-    await database.run("INSERT INTO users (name, email, password) VALUES (?, ?, ?)", [name, email, hashedPassword]);
+    await database.run(
+      "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
+      [name, email, hashedPassword]
+    );
 
     return response.status(201).json();
   }
@@ -28,44 +34,52 @@ class UsersController {
     const database = await sqliteConnection();
     const user = await database.get("SELECT * FROM users WHERE id = (?)", [id]);
 
-    if(!user) {
-      throw new AppError("The user is not registered!")
+    if (!user) {
+      throw new AppError("The user is not registered!");
     }
 
-    const userWithUpdatedEmail = await database.get("SELECT * FROM users WHERE email = (?)", [email])
+    const userWithUpdatedEmail = await database.get(
+      "SELECT * FROM users WHERE email = (?)",
+      [email]
+    );
 
-    if(userWithUpdatedEmail && userWithUpdatedEmail.id !== id) {
+    if (userWithUpdatedEmail && userWithUpdatedEmail.id !== id) {
       throw new AppError("This email is already being used by another user.");
     }
 
     user.name = name ?? user.name;
     user.email = email ?? user.email;
 
-    if(password && !old_password) {
-      throw new AppError("You must inform the actual password, to change your password.")
+    if (password && !old_password) {
+      throw new AppError(
+        "You must inform the actual password, to change your password."
+      );
     }
 
-    if(password && old_password) {
+    if (password && old_password) {
       const checkOldPassword = await compare(old_password, user.password);
 
-      if(!checkOldPassword) {
+      if (!checkOldPassword) {
         throw new AppError("Wrong password!");
       }
 
       user.password = await hash(password, 8);
     }
 
-    await database.run(`
+    await database.run(
+      `
       UPDATE users SET
       name = ?,
       email = ?,
       password = ?,
       updated_at = DATETIME("now")
       WHERE id = ?
-    `, [name,email, user.password ,id]);
+    `,
+      [name, email, user.password, id]
+    );
 
     return response.json();
   }
-};
+}
 
 module.exports = UsersController;
