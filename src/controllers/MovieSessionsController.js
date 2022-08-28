@@ -1,6 +1,8 @@
 const { compare } = require("bcryptjs");
 const knex = require("../database/knex");
 const AppError = require("../utils/AppError");
+const authConfig = require("../configs/auth");
+const { sign } = require("jsonwebtoken");
 
 class MovieSessionsController {
   async create(request, response) {
@@ -18,7 +20,13 @@ class MovieSessionsController {
       throw new AppError("Email and/or Password is wrong!", 401);
     }
 
-    return response.json(user);
+    const { secret, expiresIn } = authConfig.jwt;
+    const token = sign({}, secret, {
+      subject: String(user.id),
+      expiresIn
+    });
+
+    return response.json({ user, token });
   }
 }
 
